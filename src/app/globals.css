@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  --color-linkedin: #0a66c2;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #ffffff;
+  color: #000000;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes arrow-flow {
+  0% {
+    stroke-dashoffset: 14;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-arrow-flow {
+  animation: arrow-flow 1.5s ease-in-out infinite;
+}
