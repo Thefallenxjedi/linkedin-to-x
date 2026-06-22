@@ -1,6 +1,6 @@
 "use client";
 
-import { getClientAuth } from "@/lib/firebase/client";
+import { getClientAuth, isFirebaseConfigured } from "@/lib/firebase/client";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -40,6 +40,11 @@ export default function GoogleSignInButton({
   const [error, setError] = useState<string | null>(null);
 
   async function handleSignIn() {
+    if (!isFirebaseConfigured()) {
+      setError("Authentication is not configured on this deployment.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 

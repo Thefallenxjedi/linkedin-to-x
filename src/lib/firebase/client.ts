@@ -1,4 +1,4 @@
-import { initializeApp, getApps } from "firebase/app";
+import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -10,7 +10,24 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+export function isFirebaseConfigured(): boolean {
+  return Boolean(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId);
+}
+
+let appInstance: FirebaseApp | null = null;
 let authInstance: Auth | null = null;
+
+function getFirebaseApp(): FirebaseApp {
+  if (!isFirebaseConfigured()) {
+    throw new Error("Firebase is not configured. Add environment variables to enable authentication.");
+  }
+
+  if (!appInstance) {
+    appInstance = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  }
+
+  return appInstance;
+}
 
 export function getClientAuth(): Auth {
   if (typeof window === "undefined") {
@@ -18,8 +35,7 @@ export function getClientAuth(): Auth {
   }
 
   if (!authInstance) {
-    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-    authInstance = getAuth(app);
+    authInstance = getAuth(getFirebaseApp());
   }
 
   return authInstance;
