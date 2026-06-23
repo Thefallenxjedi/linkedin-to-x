@@ -1,7 +1,9 @@
 "use client";
 
+import { formatAuthError, shouldUseGoogleRedirect } from "@/lib/firebase/authErrors";
 import { getClientAuth, isFirebaseConfigured } from "@/lib/firebase/client";
-import { GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 function GoogleIcon() {
@@ -27,23 +29,6 @@ function GoogleIcon() {
   );
 }
 
-function formatAuthError(err: unknown): string {
-  const code = (err as { code?: string })?.code;
-  const message = (err as { message?: string })?.message;
-
-  if (code === "auth/unauthorized-domain") {
-    return "This site domain is not authorized in Firebase. Add linkedin-to-x.vercel.app under Authentication → Settings → Authorized domains.";
-  }
-  if (code === "auth/operation-not-allowed") {
-    return "Google sign-in is not enabled. Enable it in Firebase → Authentication → Sign-in method → Google.";
-  }
-  if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
-    return "Sign in was cancelled.";
-  }
-
-  return message ?? "Sign in failed. Please try again.";
-}
-
 export default function GoogleSignInButton({
   label,
   next = "/dashboard",
@@ -51,6 +36,7 @@ export default function GoogleSignInButton({
   label: string;
   next?: string;
 }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,15 +50,25 @@ export default function GoogleSignInButton({
     setError(null);
 
     try {
-      sessionStorage.setItem("auth_redirect_next", next);
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
-      await signInWithRedirect(getClientAuth(), provider);
+
+      if (shouldUseGoogleRedirect()) {
+        sessionStorage.setItem("auth_redirect_next", next);
+        await signInWithRedirect(getClientAuth(), provider);
+        return;
+      }
+
+      await signInWithPopup(getClientAuth(), provider);
+      router.push(next);
+      router.refresh();
     } catch (err) {
       setError(formatAuthError(err));
       setLoading(false);
     }
   }
+
+  const loadingLabel = shouldUseGoogleRedirect() ? "Redirecting to Google..." : "Signing in...";
 
   return (
     <div>
@@ -86,7 +82,7 @@ export default function GoogleSignInButton({
         className="w-full inline-flex items-center justify-center gap-3 rounded-lg border border-black/10 bg-white px-6 py-3.5 text-base font-medium text-black hover:bg-black/[0.03] transition-colors disabled:opacity-50"
       >
         <GoogleIcon />
-        {loading ? "Redirecting to Google..." : label}
+        {loading ? loadingLabel : label}
       </button>
     </div>
   );

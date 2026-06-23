@@ -1,24 +1,11 @@
 "use client";
 
+import { useAuth } from "@/components/AuthProvider";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import LoginRedirect from "@/components/LoginRedirect";
 import { LinkedInLogo, XLogo } from "@/components/icons";
-import { getClientAuth, isFirebaseConfigured } from "@/lib/firebase/client";
-import { getRedirectResult } from "firebase/auth";
+import { isFirebaseConfigured } from "@/lib/firebase/client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-
-function formatAuthError(err: unknown): string {
-  const code = (err as { code?: string })?.code;
-  const message = (err as { message?: string })?.message;
-
-  if (code === "auth/unauthorized-domain") {
-    return "This site domain is not authorized in Firebase. Add linkedin-to-x.vercel.app under Authentication → Settings → Authorized domains.";
-  }
-
-  return message ?? "Sign in failed. Please try again.";
-}
 
 export default function LoginForm({
   error: urlError,
@@ -27,36 +14,11 @@ export default function LoginForm({
   error?: string;
   redirectTo: string;
 }) {
-  const router = useRouter();
+  const { loading, authError } = useAuth();
   const firebaseReady = isFirebaseConfigured();
-  const [checkingRedirect, setCheckingRedirect] = useState(firebaseReady);
-  const [redirectError, setRedirectError] = useState<string | null>(null);
+  const error = urlError || authError;
 
-  useEffect(() => {
-    if (!firebaseReady) {
-      setCheckingRedirect(false);
-      return;
-    }
-
-    getRedirectResult(getClientAuth())
-      .then((result) => {
-        if (result?.user) {
-          const next = sessionStorage.getItem("auth_redirect_next") ?? redirectTo;
-          sessionStorage.removeItem("auth_redirect_next");
-          router.replace(next);
-        }
-      })
-      .catch((err) => {
-        setRedirectError(formatAuthError(err));
-      })
-      .finally(() => {
-        setCheckingRedirect(false);
-      });
-  }, [firebaseReady, redirectTo, router]);
-
-  const error = urlError || redirectError;
-
-  if (checkingRedirect) {
+  if (firebaseReady && loading) {
     return (
       <main className="min-h-screen flex items-center justify-center text-black/50">
         Completing sign in...
@@ -82,11 +44,7 @@ export default function LoginForm({
 
           {!firebaseReady && (
             <p className="mt-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-center">
-              Google sign-in is being configured. You can still use the{" "}
-              <Link href="/dashboard" className="underline font-medium">
-                converter
-              </Link>{" "}
-              after adding your AI key in Settings.
+              Google sign-in is being configured. Contact support if this persists.
             </p>
           )}
 

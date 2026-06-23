@@ -1,8 +1,10 @@
 "use client";
 
 import { DEV_MOCK_USER, isLocalDevBypass } from "@/lib/devAuth";
+import { formatAuthError } from "@/lib/firebase/authErrors";
 import { getClientAuth, isFirebaseConfigured } from "@/lib/firebase/client";
-import { onAuthStateChanged, type User } from "firebase/auth";
+import { upsertUserProfile } from "@/lib/firebase/users";
+import { getRedirectResult, onAuthStateChanged, type User } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 
 type AuthContextValue = {
@@ -10,6 +12,7 @@ type AuthContextValue = {
   loading: boolean;
   isDevBypass: boolean;
   firebaseReady: boolean;
+  authError: string | null;
 };
 
 const AuthContext = createContext<AuthContextValue>({
@@ -17,12 +20,14 @@ const AuthContext = createContext<AuthContextValue>({
   loading: true,
   isDevBypass: false,
   firebaseReady: false,
+  authError: null,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDevBypass, setIsDevBypass] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const firebaseReady = isFirebaseConfigured();
 
   useEffect(() => {
@@ -38,18 +43,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    try {
-      return onAuthStateChanged(getClientAuth(), (nextUser) => {
+    let unsubscribe: (() => void) | undefined;
+
+    async function initAuth() {
+      try {
+        await getRedirectResult(getClientAuth());
+      } catch (err) {
+        setAuthError(formatAuthError(err));
+      }
+
+      unsubscribe = onAuthStateChanged(getClientAuth(), (nextUser) => {
         setUser(nextUser);
         setLoading(false);
+
+        if (nextUser) {
+          upsertUserProfile(nextUser).catch((err) => {
+            console.error("Failed to save user profile:", err);
+          });
+        }
       });
-    } catch {
-      setLoading(false);
     }
+
+    initAuth();
+
+    return () => {
+      unsubscribe?.();
+    };
   }, [firebaseReady]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, isDevBypass, firebaseReady }}>
+    <AuthContext.Provider value={{ user, loading, isDevBypass, firebaseReady, authError }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,7 +1,7 @@
 "use client";
 
-import { isLocalDevBypass } from "@/lib/devAuth";
 import { useAuth } from "@/components/AuthProvider";
+import { isLocalDevBypass } from "@/lib/devAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -34,7 +34,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-black/50">
+        Redirecting to login...
+      </div>
+    );
   }
 
   return <>{children}</>;

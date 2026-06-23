@@ -10,7 +10,12 @@ export default function LoginRedirect({ next = "/dashboard" }: { next?: string }
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace(next);
+      const stored =
+        typeof window !== "undefined" ? sessionStorage.getItem("auth_redirect_next") : null;
+      if (stored) {
+        sessionStorage.removeItem("auth_redirect_next");
+      }
+      router.replace(stored || next);
     }
   }, [user, loading, next, router]);
 
