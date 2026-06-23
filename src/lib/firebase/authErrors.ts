@@ -1,3 +1,20 @@
+export function normalizeRedirectPath(
+  path: string | null | undefined,
+  fallback = "/dashboard"
+): string {
+  if (!path) return fallback;
+
+  const trimmed = path.trim();
+  if (!trimmed) return fallback;
+
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) {
+    return trimmed.split("?")[0]?.split("#")[0] || fallback;
+  }
+
+  const withoutSlashes = trimmed.replace(/^\/+/, "");
+  return `/${withoutSlashes.split("?")[0]?.split("#")[0] || fallback}`;
+}
+
 export function formatAuthError(err: unknown): string {
   const code = (err as { code?: string })?.code;
   const message = (err as { message?: string })?.message;

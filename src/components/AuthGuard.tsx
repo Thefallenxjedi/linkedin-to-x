@@ -2,20 +2,22 @@
 
 import { useAuth } from "@/components/AuthProvider";
 import { isLocalDevBypass } from "@/lib/devAuth";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, isDevBypass, firebaseReady } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (isLocalDevBypass() || isDevBypass) return;
     if (!firebaseReady) return;
     if (!loading && !user) {
-      router.replace("/login");
+      const next = pathname && pathname !== "/login" ? `?next=${encodeURIComponent(pathname)}` : "";
+      router.replace(`/login${next}`);
     }
-  }, [user, loading, isDevBypass, firebaseReady, router]);
+  }, [user, loading, isDevBypass, firebaseReady, router, pathname]);
 
   if (isLocalDevBypass() || isDevBypass) {
     return <>{children}</>;

@@ -1,7 +1,7 @@
 "use client";
 
 import { DEV_MOCK_USER, isLocalDevBypass } from "@/lib/devAuth";
-import { formatAuthError } from "@/lib/firebase/authErrors";
+import { formatAuthError, normalizeRedirectPath } from "@/lib/firebase/authErrors";
 import { getClientAuth, isFirebaseConfigured } from "@/lib/firebase/client";
 import { upsertUserProfile } from "@/lib/firebase/users";
 import { getRedirectResult, onAuthStateChanged, type User } from "firebase/auth";
@@ -47,7 +47,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function initAuth() {
       try {
-        await getRedirectResult(getClientAuth());
+        const result = await getRedirectResult(getClientAuth());
+        if (result?.user) {
+          const stored = sessionStorage.getItem("auth_redirect_next");
+          sessionStorage.removeItem("auth_redirect_next");
+          const target = normalizeRedirectPath(stored, "/dashboard");
+          window.location.replace(target);
+          return;
+        }
       } catch (err) {
         setAuthError(formatAuthError(err));
       }

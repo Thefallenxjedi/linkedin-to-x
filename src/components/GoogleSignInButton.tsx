@@ -1,6 +1,6 @@
 "use client";
 
-import { formatAuthError, shouldUseGoogleRedirect } from "@/lib/firebase/authErrors";
+import { formatAuthError, normalizeRedirectPath, shouldUseGoogleRedirect } from "@/lib/firebase/authErrors";
 import { getClientAuth, isFirebaseConfigured } from "@/lib/firebase/client";
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -54,13 +54,13 @@ export default function GoogleSignInButton({
       provider.setCustomParameters({ prompt: "select_account" });
 
       if (shouldUseGoogleRedirect()) {
-        sessionStorage.setItem("auth_redirect_next", next);
+        sessionStorage.setItem("auth_redirect_next", normalizeRedirectPath(next));
         await signInWithRedirect(getClientAuth(), provider);
         return;
       }
 
       await signInWithPopup(getClientAuth(), provider);
-      router.push(next);
+      router.push(normalizeRedirectPath(next));
       router.refresh();
     } catch (err) {
       setError(formatAuthError(err));

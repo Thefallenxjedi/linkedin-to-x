@@ -1,12 +1,11 @@
 "use client";
 
+import { normalizeRedirectPath } from "@/lib/firebase/authErrors";
 import { useAuth } from "@/components/AuthProvider";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function LoginRedirect({ next = "/dashboard" }: { next?: string }) {
   const { user, loading } = useAuth();
-  const router = useRouter();
 
   useEffect(() => {
     if (!loading && user) {
@@ -15,9 +14,10 @@ export default function LoginRedirect({ next = "/dashboard" }: { next?: string }
       if (stored) {
         sessionStorage.removeItem("auth_redirect_next");
       }
-      router.replace(stored || next);
+      const target = normalizeRedirectPath(stored ?? next);
+      window.location.replace(target);
     }
-  }, [user, loading, next, router]);
+  }, [user, loading, next]);
 
   return null;
 }
