@@ -3,8 +3,11 @@
 import { useAuth } from "@/components/AuthProvider";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import { LinkedInLogo, XLogo } from "@/components/icons";
+import { normalizeRedirectPath } from "@/lib/firebase/authErrors";
 import { isFirebaseConfigured } from "@/lib/firebase/client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function LoginForm({
   error: urlError,
@@ -13,9 +16,16 @@ export default function LoginForm({
   error?: string;
   redirectTo: string;
 }) {
-  const { loading, authError } = useAuth();
+  const { user, loading, authError } = useAuth();
+  const router = useRouter();
   const firebaseReady = isFirebaseConfigured();
   const error = urlError || authError;
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(normalizeRedirectPath(redirectTo));
+    }
+  }, [user, loading, redirectTo, router]);
 
   if (firebaseReady && loading) {
     return (

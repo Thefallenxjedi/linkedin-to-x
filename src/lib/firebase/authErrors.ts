@@ -28,6 +28,12 @@ export function formatAuthError(err: unknown): string {
   if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
     return "Sign in was cancelled.";
   }
+  if (code === "auth/popup-blocked") {
+    return "Sign in popup was blocked. Allow popups for this site and try again.";
+  }
+  if (message?.includes("redirect_uri_mismatch")) {
+    return "Google OAuth redirect is not configured. In Google Cloud Console, add https://linkedin-to-x.vercel.app/__/auth/handler to Authorized redirect URIs.";
+  }
 
   return message ?? "Sign in failed. Please try again.";
 }

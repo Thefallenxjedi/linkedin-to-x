@@ -1,8 +1,8 @@
 "use client";
 
-import { formatAuthError, normalizeRedirectPath, shouldUseGoogleRedirect } from "@/lib/firebase/authErrors";
+import { formatAuthError, normalizeRedirectPath } from "@/lib/firebase/authErrors";
 import { getClientAuth, isFirebaseConfigured } from "@/lib/firebase/client";
-import { GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -49,39 +49,17 @@ export default function GoogleSignInButton({
     setLoading(true);
     setError(null);
 
-    const target = normalizeRedirectPath(next);
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
-
     try {
-      if (!shouldUseGoogleRedirect()) {
-        await signInWithPopup(getClientAuth(), provider);
-        router.push(target);
-        router.refresh();
-        return;
-      }
-
-      try {
-        await signInWithPopup(getClientAuth(), provider);
-        router.push(target);
-        router.refresh();
-        return;
-      } catch (popupErr) {
-        const code = (popupErr as { code?: string })?.code;
-        if (code !== "auth/popup-blocked") {
-          throw popupErr;
-        }
-      }
-
-      sessionStorage.setItem("auth_redirect_next", target);
-      await signInWithRedirect(getClientAuth(), provider);
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      await signInWithPopup(getClientAuth(), provider);
+      router.push(normalizeRedirectPath(next));
+      router.refresh();
     } catch (err) {
       setError(formatAuthError(err));
       setLoading(false);
     }
   }
-
-  const loadingLabel = shouldUseGoogleRedirect() ? "Redirecting to Google..." : "Signing in...";
 
   return (
     <div>
@@ -95,7 +73,7 @@ export default function GoogleSignInButton({
         className="w-full inline-flex items-center justify-center gap-3 rounded-lg border border-black/10 bg-white px-6 py-3.5 text-base font-medium text-black hover:bg-black/[0.03] transition-colors disabled:opacity-50"
       >
         <GoogleIcon />
-        {loading ? loadingLabel : label}
+        {loading ? "Signing in..." : label}
       </button>
     </div>
   );

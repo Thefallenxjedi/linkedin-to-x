@@ -1,7 +1,7 @@
 "use client";
 
 import { DEV_MOCK_USER, isLocalDevBypass } from "@/lib/devAuth";
-import { formatAuthError, normalizeRedirectPath } from "@/lib/firebase/authErrors";
+import { formatAuthError } from "@/lib/firebase/authErrors";
 import { getClientAuth, isFirebaseConfigured } from "@/lib/firebase/client";
 import { upsertUserProfile } from "@/lib/firebase/users";
 import { getRedirectResult, onAuthStateChanged, type User } from "firebase/auth";
@@ -22,13 +22,6 @@ const AuthContext = createContext<AuthContextValue>({
   firebaseReady: false,
   authError: null,
 });
-
-function redirectAfterLogin() {
-  const stored = sessionStorage.getItem("auth_redirect_next");
-  sessionStorage.removeItem("auth_redirect_next");
-  const target = normalizeRedirectPath(stored, "/dashboard");
-  window.location.replace(target);
-}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -52,7 +45,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const auth = getClientAuth();
     let unsubscribe: (() => void) | undefined;
-    let redirectHandled = false;
 
     async function initAuth() {
       try {
@@ -69,15 +61,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           upsertUserProfile(nextUser).catch((err) => {
             console.error("Failed to save user profile:", err);
           });
-
-          if (
-            !redirectHandled &&
-            typeof window !== "undefined" &&
-            window.location.pathname === "/login"
-          ) {
-            redirectHandled = true;
-            redirectAfterLogin();
-          }
         }
       });
     }
