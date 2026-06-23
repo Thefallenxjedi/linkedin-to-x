@@ -3,6 +3,7 @@ import type { AiProvider } from "@/lib/ai/types";
 export type AiSettings = {
   provider: AiProvider;
   apiKey: string;
+  model: string;
 };
 
 const STORAGE_PREFIX = "linkedin-to-x-ai-settings";
@@ -18,7 +19,7 @@ export function loadAiSettings(userId: string): AiSettings | null {
     const raw = localStorage.getItem(storageKey(userId));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as AiSettings;
-    if (!parsed.apiKey?.trim()) return null;
+    if (!parsed.apiKey?.trim() || !parsed.model?.trim()) return null;
     return parsed;
   } catch {
     return null;
@@ -35,7 +36,7 @@ export function clearAiSettings(userId: string): void {
 
 export function hasApiKey(userId: string): boolean {
   const settings = loadAiSettings(userId);
-  return Boolean(settings?.apiKey?.trim());
+  return Boolean(settings?.apiKey?.trim() && settings?.model?.trim());
 }
 
 export function maskApiKey(key: string): string {

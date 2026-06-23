@@ -27,7 +27,7 @@ function WorkspaceContent() {
   const [error, setError] = useState<string | null>(null);
 
   async function handleGenerate() {
-    if (!linkedinPost.trim() || loading || !settings?.apiKey) return;
+    if (!linkedinPost.trim() || loading || !settings?.apiKey || !settings?.model) return;
 
     setLoading(true);
     setResult(null);
@@ -40,6 +40,7 @@ function WorkspaceContent() {
         body: JSON.stringify({
           provider: settings.provider,
           apiKey: settings.apiKey,
+          model: settings.model,
           linkedinPost,
           outputFormat,
           threadCount,
@@ -82,7 +83,7 @@ function WorkspaceContent() {
         {ready && !hasKey && (
           <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <p className="text-sm text-amber-900">
-              Add your API key in Settings to start generating content.
+              Add your API key and model in Settings to start generating content.
             </p>
             <Link
               href="/settings"
@@ -145,7 +146,7 @@ function WorkspaceContent() {
 
             {!hasKey && (
               <p className="text-xs text-center text-black/40">
-                Configure your API key in{" "}
+                Configure your provider, model, and API key in{" "}
                 <Link href="/settings" className="text-linkedin hover:underline">
                   Settings
                 </Link>{" "}

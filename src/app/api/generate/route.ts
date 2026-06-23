@@ -7,11 +7,15 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as GenerateRequest;
 
-    const { provider, apiKey, linkedinPost, outputFormat, threadCount, voiceId, instructions } =
+    const { provider, apiKey, model, linkedinPost, outputFormat, threadCount, voiceId, instructions } =
       body;
 
     if (!apiKey?.trim()) {
       return NextResponse.json({ error: "API key is required" }, { status: 400 });
+    }
+
+    if (!model?.trim()) {
+      return NextResponse.json({ error: "Model is required" }, { status: 400 });
     }
 
     if (!linkedinPost?.trim()) {
@@ -26,7 +30,7 @@ export async function POST(request: Request) {
       instructions,
     });
 
-    const raw = await callAiProvider(provider, apiKey.trim(), systemPrompt, userPrompt);
+    const raw = await callAiProvider(provider, apiKey.trim(), model.trim(), systemPrompt, userPrompt);
     const result = parseGenerationJson(raw);
 
     return NextResponse.json({ result });

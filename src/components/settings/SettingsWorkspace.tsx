@@ -3,8 +3,8 @@
 import AuthGuard from "@/components/AuthGuard";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import {
-  PROVIDER_KEY_PLACEHOLDER,
   PROVIDER_LABELS,
+  PROVIDER_MODEL_PLACEHOLDER,
   useAiSettings,
 } from "@/lib/settings/useAiSettings";
 import { maskApiKey, saveAiSettings } from "@/lib/settings/storage";
@@ -15,6 +15,7 @@ function SettingsContent() {
   const { settings, hasKey, refresh, userId } = useAiSettings();
 
   const [provider, setProvider] = useState<AiProvider>(settings?.provider ?? "openai");
+  const [model, setModel] = useState(settings?.model ?? "");
   const [apiKey, setApiKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -22,6 +23,7 @@ function SettingsContent() {
 
   useEffect(() => {
     if (settings?.provider) setProvider(settings.provider);
+    if (settings?.model) setModel(settings.model);
   }, [settings]);
 
   async function handleSave(e: React.FormEvent) {
@@ -30,14 +32,19 @@ function SettingsContent() {
     setSaved(false);
 
     const keyToSave = apiKey.trim() || settings?.apiKey;
+    const modelToSave = model.trim();
     if (!keyToSave) {
       setError("Please enter your API key.");
+      return;
+    }
+    if (!modelToSave) {
+      setError("Please enter a model name.");
       return;
     }
 
     setSaving(true);
     try {
-      saveAiSettings(userId, { provider, apiKey: keyToSave });
+      saveAiSettings(userId, { provider, apiKey: keyToSave, model: modelToSave });
       setApiKey("");
       refresh();
       setSaved(true);
@@ -108,6 +115,24 @@ function SettingsContent() {
           </div>
 
           <div>
+            <label htmlFor="model" className="block text-sm font-medium text-black/70 mb-3">
+              Model
+            </label>
+            <input
+              id="model"
+              type="text"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              placeholder={PROVIDER_MODEL_PLACEHOLDER[provider]}
+              autoComplete="off"
+              className="w-full rounded-xl border border-black/10 bg-black/[0.02] px-4 py-3 text-sm text-black placeholder:text-black/30 focus:outline-none focus:ring-2 focus:ring-linkedin/20 focus:border-linkedin/40 font-mono"
+            />
+            <p className="mt-2 text-xs text-black/40">
+              Use any model ID supported by your provider.
+            </p>
+          </div>
+
+          <div>
             <label htmlFor="api-key" className="block text-sm font-medium text-black/70 mb-3">
               API key
             </label>
@@ -121,7 +146,7 @@ function SettingsContent() {
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder={PROVIDER_KEY_PLACEHOLDER[provider]}
+              placeholder="Paste your API key"
               autoComplete="off"
               className="w-full rounded-xl border border-black/10 bg-black/[0.02] px-4 py-3 text-sm text-black placeholder:text-black/30 focus:outline-none focus:ring-2 focus:ring-linkedin/20 focus:border-linkedin/40 font-mono"
             />
@@ -134,7 +159,7 @@ function SettingsContent() {
 
           {error && <p className="text-sm text-red-600">{error}</p>}
           {saved && (
-            <p className="text-sm text-green-600">API key saved successfully. You can now generate content.</p>
+            <p className="text-sm text-green-600">Settings saved. You can now generate content.</p>
           )}
 
           <button
@@ -147,7 +172,7 @@ function SettingsContent() {
 
           {hasKey && (
             <p className="text-center text-xs text-green-600 font-medium">
-              ✓ API key active — generation enabled
+              ✓ {PROVIDER_LABELS[settings!.provider]} · {settings!.model} — generation enabled
             </p>
           )}
         </form>

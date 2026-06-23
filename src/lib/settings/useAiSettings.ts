@@ -21,7 +21,7 @@ export function useAiSettings() {
     refresh();
   }, [refresh]);
 
-  const hasKey = Boolean(settings?.apiKey?.trim());
+  const hasKey = Boolean(settings?.apiKey?.trim() && settings?.model?.trim());
 
   return { settings, hasKey, ready, refresh, userId };
 }
@@ -32,8 +32,8 @@ export const PROVIDER_LABELS: Record<AiProvider, string> = {
   gemini: "Gemini",
 };
 
-export const PROVIDER_KEY_PLACEHOLDER: Record<AiProvider, string> = {
-  openai: "sk-xxxxxxxxxxxxxxxx",
-  anthropic: "sk-ant-xxxxxxxxxxxxxxxx",
-  gemini: "AIzaSyxxxxxxxxxxxxxxxx",
+export const PROVIDER_MODEL_PLACEHOLDER: Record<AiProvider, string> = {
+  openai: "e.g. gpt-4o-mini",
+  anthropic: "e.g. claude-3-5-haiku-latest",
+  gemini: "e.g. gemini-1.5-flash",
 };

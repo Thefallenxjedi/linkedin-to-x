@@ -3,22 +3,28 @@ import type { AiProvider } from "./types";
 export async function callAiProvider(
   provider: AiProvider,
   apiKey: string,
+  model: string,
   systemPrompt: string,
   userPrompt: string
 ): Promise<string> {
   switch (provider) {
     case "openai":
-      return callOpenAI(apiKey, systemPrompt, userPrompt);
+      return callOpenAI(apiKey, model, systemPrompt, userPrompt);
     case "anthropic":
-      return callAnthropic(apiKey, systemPrompt, userPrompt);
+      return callAnthropic(apiKey, model, systemPrompt, userPrompt);
     case "gemini":
-      return callGemini(apiKey, systemPrompt, userPrompt);
+      return callGemini(apiKey, model, systemPrompt, userPrompt);
     default:
       throw new Error("Unsupported AI provider");
   }
 }
 
-async function callOpenAI(apiKey: string, system: string, user: string): Promise<string> {
+async function callOpenAI(
+  apiKey: string,
+  model: string,
+  system: string,
+  user: string
+): Promise<string> {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -26,7 +32,7 @@ async function callOpenAI(apiKey: string, system: string, user: string): Promise
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model,
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -44,7 +50,12 @@ async function callOpenAI(apiKey: string, system: string, user: string): Promise
   return data.choices?.[0]?.message?.content ?? "";
 }
 
-async function callAnthropic(apiKey: string, system: string, user: string): Promise<string> {
+async function callAnthropic(
+  apiKey: string,
+  model: string,
+  system: string,
+  user: string
+): Promise<string> {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -53,7 +64,7 @@ async function callAnthropic(apiKey: string, system: string, user: string): Prom
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: "claude-3-5-haiku-latest",
+      model,
       max_tokens: 4096,
       system,
       messages: [{ role: "user", content: user }],
@@ -70,8 +81,13 @@ async function callAnthropic(apiKey: string, system: string, user: string): Prom
   return block?.text ?? "";
 }
 
-async function callGemini(apiKey: string, system: string, user: string): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+async function callGemini(
+  apiKey: string,
+  model: string,
+  system: string,
+  user: string
+): Promise<string> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${apiKey}`;
 
   const res = await fetch(url, {
     method: "POST",

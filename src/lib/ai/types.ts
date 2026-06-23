@@ -10,6 +10,7 @@ export type GenerationResult =
 export type GenerateRequest = {
   provider: AiProvider;
   apiKey: string;
+  model: string;
   linkedinPost: string;
   outputFormat: OutputFormat;
   threadCount: number;
