@@ -1,3 +1,4 @@
+import { parseProviderError } from "@/lib/ai/errors";
 import type { AiProvider } from "./types";
 
 export async function callAiProvider(
@@ -9,7 +10,27 @@ export async function callAiProvider(
 ): Promise<string> {
   switch (provider) {
     case "openai":
-      return callOpenAI(apiKey, model, systemPrompt, userPrompt);
+      return callOpenAiCompatible(
+        "https://api.openai.com/v1/chat/completions",
+        apiKey,
+        model,
+        systemPrompt,
+        userPrompt,
+        "OpenAI"
+      );
+    case "openrouter":
+      return callOpenAiCompatible(
+        "https://openrouter.ai/api/v1/chat/completions",
+        apiKey,
+        model,
+        systemPrompt,
+        userPrompt,
+        "OpenRouter",
+        {
+          "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL ?? "https://linkedin-to-x.vercel.app",
+          "X-Title": "LinkedIn to X",
+        }
+      );
     case "anthropic":
       return callAnthropic(apiKey, model, systemPrompt, userPrompt);
     case "gemini":
@@ -19,17 +40,21 @@ export async function callAiProvider(
   }
 }
 
-async function callOpenAI(
+async function callOpenAiCompatible(
+  url: string,
   apiKey: string,
   model: string,
   system: string,
-  user: string
+  user: string,
+  providerLabel: string,
+  extraHeaders?: Record<string, string>
 ): Promise<string> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
+      ...extraHeaders,
     },
     body: JSON.stringify({
       model,
@@ -42,8 +67,7 @@ async function callOpenAI(
   });
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(parseProviderError("OpenAI", err));
+    throw new Error(parseProviderError(providerLabel, await res.text()));
   }
 
   const data = await res.json();
@@ -72,8 +96,7 @@ async function callAnthropic(
   });
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(parseProviderError("Anthropic", err));
+    throw new Error(parseProviderError("Anthropic", await res.text()));
   }
 
   const data = await res.json();
@@ -87,7 +110,8 @@ async function callGemini(
   system: string,
   user: string
 ): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${apiKey}`;
+  const modelId = model.replace(/^models\//i, "");
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelId)}:generateContent?key=${apiKey}`;
 
   const res = await fetch(url, {
     method: "POST",
@@ -100,23 +124,16 @@ async function callGemini(
   });
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(parseProviderError("Gemini", err));
+    throw new Error(parseProviderError("Gemini", await res.text()));
   }
 
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-}
-
-function parseProviderError(provider: string, raw: string): string {
-  try {
-    const parsed = JSON.parse(raw);
-    const msg =
-      parsed.error?.message ?? parsed.error?.message ?? parsed.message ?? raw;
-    return `${provider}: ${msg}`;
-  } catch {
-    return `${provider}: ${raw.slice(0, 200)}`;
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  if (!text) {
+    throw new Error("Gemini: Empty response from model. Try a different model.");
   }
+
+  return text;
 }
 
 export function parseGenerationJson(text: string): import("./types").GenerationResult {

@@ -14,7 +14,7 @@ import { useState } from "react";
 
 function WorkspaceContent() {
   const { user } = useAuth();
-  const { settings, hasKey, ready } = useAiSettings();
+  const { settings, isConfigured, ready } = useAiSettings();
   const displayName = user?.displayName ?? user?.email ?? "there";
 
   const [linkedinPost, setLinkedinPost] = useState("");
@@ -63,7 +63,7 @@ function WorkspaceContent() {
     }
   }
 
-  const canGenerate = linkedinPost.trim().length > 0 && !loading && hasKey;
+  const canGenerate = linkedinPost.trim().length > 0 && !loading && isConfigured;
 
   return (
     <main className="min-h-screen bg-white">
@@ -80,10 +80,10 @@ function WorkspaceContent() {
           </p>
         </div>
 
-        {ready && !hasKey && (
+        {ready && !isConfigured && (
           <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <p className="text-sm text-amber-900">
-              Add your API key and model in Settings to start generating content.
+              Add your API key and select a model in Settings to start generating content.
             </p>
             <Link
               href="/settings"
@@ -144,9 +144,9 @@ function WorkspaceContent() {
               {loading ? "Generating..." : "Generate X Thread"}
             </button>
 
-            {!hasKey && (
+            {!isConfigured && (
               <p className="text-xs text-center text-black/40">
-                Configure your provider, model, and API key in{" "}
+                Configure your provider and model in{" "}
                 <Link href="/settings" className="text-linkedin hover:underline">
                   Settings
                 </Link>{" "}

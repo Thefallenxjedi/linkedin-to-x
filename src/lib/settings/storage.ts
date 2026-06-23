@@ -4,6 +4,7 @@ export type AiSettings = {
   provider: AiProvider;
   apiKey: string;
   model: string;
+  modelLabel?: string;
 };
 
 const STORAGE_PREFIX = "linkedin-to-x-ai-settings";

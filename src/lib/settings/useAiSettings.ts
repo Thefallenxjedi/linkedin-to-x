@@ -21,19 +21,18 @@ export function useAiSettings() {
     refresh();
   }, [refresh]);
 
-  const hasKey = Boolean(settings?.apiKey?.trim() && settings?.model?.trim());
+  const isConfigured = Boolean(
+    settings?.apiKey?.trim() && settings?.model?.trim() && settings?.provider
+  );
 
-  return { settings, hasKey, ready, refresh, userId };
+  return { settings, isConfigured, ready, refresh, userId };
 }
 
 export const PROVIDER_LABELS: Record<AiProvider, string> = {
-  openai: "OpenAI",
-  anthropic: "Anthropic",
   gemini: "Gemini",
+  openai: "OpenAI",
+  openrouter: "OpenRouter",
+  anthropic: "Anthropic",
 };
 
-export const PROVIDER_MODEL_PLACEHOLDER: Record<AiProvider, string> = {
-  openai: "e.g. gpt-4o-mini",
-  anthropic: "e.g. claude-3-5-haiku-latest",
-  gemini: "e.g. gemini-1.5-flash",
-};
+export const PROVIDERS: AiProvider[] = ["gemini", "openai", "openrouter", "anthropic"];
