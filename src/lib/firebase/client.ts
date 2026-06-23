@@ -1,5 +1,10 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
+import {
+  browserPopupRedirectResolver,
+  getAuth,
+  initializeAuth,
+  type Auth,
+} from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -37,7 +42,14 @@ export function getClientAuth(): Auth {
   }
 
   if (!authInstance) {
-    authInstance = getAuth(getFirebaseApp());
+    const app = getFirebaseApp();
+    try {
+      authInstance = initializeAuth(app, {
+        popupRedirectResolver: browserPopupRedirectResolver,
+      });
+    } catch {
+      authInstance = getAuth(app);
+    }
   }
 
   return authInstance;

@@ -2,7 +2,6 @@
 
 import { useAuth } from "@/components/AuthProvider";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
-import LoginRedirect from "@/components/LoginRedirect";
 import { LinkedInLogo, XLogo } from "@/components/icons";
 import { isFirebaseConfigured } from "@/lib/firebase/client";
 import Link from "next/link";
@@ -28,7 +27,6 @@ export default function LoginForm({
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
-      <LoginRedirect next={redirectTo} />
       <div className="w-full max-w-sm">
         <Link href="/" className="flex items-center justify-center gap-3 mb-10">
           <LinkedInLogo className="w-7 h-7" />

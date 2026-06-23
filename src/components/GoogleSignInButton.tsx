@@ -49,19 +49,32 @@ export default function GoogleSignInButton({
     setLoading(true);
     setError(null);
 
-    try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
+    const target = normalizeRedirectPath(next);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
 
-      if (shouldUseGoogleRedirect()) {
-        sessionStorage.setItem("auth_redirect_next", normalizeRedirectPath(next));
-        await signInWithRedirect(getClientAuth(), provider);
+    try {
+      if (!shouldUseGoogleRedirect()) {
+        await signInWithPopup(getClientAuth(), provider);
+        router.push(target);
+        router.refresh();
         return;
       }
 
-      await signInWithPopup(getClientAuth(), provider);
-      router.push(normalizeRedirectPath(next));
-      router.refresh();
+      try {
+        await signInWithPopup(getClientAuth(), provider);
+        router.push(target);
+        router.refresh();
+        return;
+      } catch (popupErr) {
+        const code = (popupErr as { code?: string })?.code;
+        if (code !== "auth/popup-blocked") {
+          throw popupErr;
+        }
+      }
+
+      sessionStorage.setItem("auth_redirect_next", target);
+      await signInWithRedirect(getClientAuth(), provider);
     } catch (err) {
       setError(formatAuthError(err));
       setLoading(false);

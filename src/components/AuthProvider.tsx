@@ -23,6 +23,13 @@ const AuthContext = createContext<AuthContextValue>({
   authError: null,
 });
 
+function redirectAfterLogin() {
+  const stored = sessionStorage.getItem("auth_redirect_next");
+  sessionStorage.removeItem("auth_redirect_next");
+  const target = normalizeRedirectPath(stored, "/dashboard");
+  window.location.replace(target);
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,23 +50,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    const auth = getClientAuth();
     let unsubscribe: (() => void) | undefined;
+    let redirectHandled = false;
 
     async function initAuth() {
       try {
-        const result = await getRedirectResult(getClientAuth());
-        if (result?.user) {
-          const stored = sessionStorage.getItem("auth_redirect_next");
-          sessionStorage.removeItem("auth_redirect_next");
-          const target = normalizeRedirectPath(stored, "/dashboard");
-          window.location.replace(target);
-          return;
-        }
+        await getRedirectResult(auth);
       } catch (err) {
         setAuthError(formatAuthError(err));
       }
 
-      unsubscribe = onAuthStateChanged(getClientAuth(), (nextUser) => {
+      unsubscribe = onAuthStateChanged(auth, (nextUser) => {
         setUser(nextUser);
         setLoading(false);
 
@@ -67,6 +69,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           upsertUserProfile(nextUser).catch((err) => {
             console.error("Failed to save user profile:", err);
           });
+
+          if (
+            !redirectHandled &&
+            typeof window !== "undefined" &&
+            window.location.pathname === "/login"
+          ) {
+            redirectHandled = true;
+            redirectAfterLogin();
+          }
         }
       });
     }
