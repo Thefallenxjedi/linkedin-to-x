@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as GenerateRequest;
 
-    const { provider, apiKey, model, linkedinPost, outputFormat, threadCount, voiceId, instructions } =
+    const { provider, apiKey, model, customPrompt, linkedinPost, outputFormat, threadCount, voiceId, instructions } =
       body;
 
     if (!apiKey?.trim()) {
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "LinkedIn post is required" }, { status: 400 });
     }
 
-    const systemPrompt = buildSystemPrompt(voiceId);
+    const systemPrompt = buildSystemPrompt(voiceId, customPrompt);
     const userPrompt = buildUserPrompt({
       linkedinPost,
       outputFormat,

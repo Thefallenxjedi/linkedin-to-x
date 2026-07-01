@@ -16,6 +16,7 @@ export type GenerateRequest = {
   provider: AiProvider;
   apiKey: string;
   model: string;
+  customPrompt?: string;
   linkedinPost: string;
   outputFormat: OutputFormat;
   threadCount: number;

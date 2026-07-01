@@ -5,6 +5,7 @@ export type AiSettings = {
   apiKey: string;
   model: string;
   modelLabel?: string;
+  customPrompt?: string;
 };
 
 const STORAGE_PREFIX = "linkedin-to-x-ai-settings";

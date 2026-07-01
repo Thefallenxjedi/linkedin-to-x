@@ -6,15 +6,18 @@ import type { DiscoveredModel } from "@/lib/ai/types";
 import { maskApiKey, saveAiSettings } from "@/lib/settings/storage";
 import { PROVIDER_LABELS, PROVIDERS, useAiSettings } from "@/lib/settings/useAiSettings";
 import type { AiProvider } from "@/lib/ai/types";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type ConnectionState = "idle" | "testing" | "connected" | "error";
 
 function SettingsContent() {
+  const router = useRouter();
   const { settings, isConfigured, refresh, userId } = useAiSettings();
 
   const [provider, setProvider] = useState<AiProvider>(settings?.provider ?? "gemini");
   const [apiKey, setApiKey] = useState("");
+  const [customPrompt, setCustomPrompt] = useState(settings?.customPrompt ?? "");
   const [models, setModels] = useState<DiscoveredModel[]>([]);
   const [selectedModel, setSelectedModel] = useState(settings?.model ?? "");
   const [connectionState, setConnectionState] = useState<ConnectionState>(
@@ -29,6 +32,7 @@ function SettingsContent() {
     if (!settings) return;
     setProvider(settings.provider);
     setSelectedModel(settings.model);
+    setCustomPrompt(settings.customPrompt ?? "");
     if (settings.model) {
       setModels([
         {
@@ -138,11 +142,11 @@ function SettingsContent() {
         apiKey: keyToSave,
         model: selectedModel,
         modelLabel,
+        customPrompt: customPrompt.trim() || undefined,
       });
       setApiKey("");
       refresh();
       setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
     } catch {
       setError("Failed to save settings. Please try again.");
     } finally {
@@ -167,6 +171,34 @@ function SettingsContent() {
             automatically — you never need to type model IDs manually.
           </p>
         </div>
+
+        <details className="mb-6 rounded-xl border border-black/8 bg-black/[0.02] px-4 py-3 group">
+          <summary className="cursor-pointer text-sm font-medium text-black/80 list-none flex items-center gap-2">
+            <svg
+              className="w-4 h-4 text-linkedin shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            How it works
+            <span className="ml-auto text-black/30 text-xs group-open:hidden">Click to expand</span>
+          </summary>
+          <ol className="mt-3 space-y-2 text-sm text-black/60 list-decimal list-inside leading-relaxed">
+            <li>Choose your AI provider (Gemini, OpenAI, OpenRouter, or Anthropic).</li>
+            <li>Paste your API key — it stays in your browser only.</li>
+            <li>Click <span className="font-medium text-black/80">Test Connection</span> to load compatible models.</li>
+            <li>Pick a model, add optional custom instructions, then click <span className="font-medium text-black/80">Save Settings</span>.</li>
+            <li>Go to the Converter and paste a LinkedIn post to generate X-native content.</li>
+          </ol>
+        </details>
 
         <form
           onSubmit={handleSave}
@@ -274,9 +306,38 @@ function SettingsContent() {
             </p>
           </div>
 
+          <div>
+            <label htmlFor="custom-prompt" className="block text-sm font-medium text-black/70 mb-3">
+              Custom AI instructions
+              <span className="ml-1.5 text-xs font-normal text-black/40">(optional)</span>
+            </label>
+            <textarea
+              id="custom-prompt"
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              placeholder="e.g. Always use short sentences. Never use emojis. Prefer contrarian hooks."
+              rows={4}
+              className="w-full rounded-xl border border-black/10 bg-black/[0.02] px-4 py-3 text-sm text-black placeholder:text-black/30 focus:outline-none focus:ring-2 focus:ring-linkedin/20 focus:border-linkedin/40 resize-none"
+            />
+            <p className="mt-2 text-xs text-black/40">
+              Applied to every generation alongside your chosen voice style.
+            </p>
+          </div>
+
           {error && <p className="text-sm text-red-600 leading-relaxed">{error}</p>}
           {saved && (
-            <p className="text-sm text-green-600">Settings saved. You can now generate content.</p>
+            <div className="rounded-xl bg-green-50 border border-green-200 p-4 space-y-3">
+              <p className="text-sm text-green-700 font-medium">
+                Settings saved. You&apos;re ready to convert posts.
+              </p>
+              <button
+                type="button"
+                onClick={() => router.push("/dashboard")}
+                className="w-full inline-flex items-center justify-center rounded-lg bg-linkedin px-6 py-3 text-sm font-medium text-white hover:bg-linkedin/90 transition-colors"
+              >
+                Go to Converter →
+              </button>
+            </div>
           )}
 
           <button

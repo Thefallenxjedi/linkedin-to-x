@@ -88,9 +88,15 @@ For multiple_variations:
 
 Return exactly 5 variations for multiple_variations.`;
 
-export function buildSystemPrompt(voiceId: string): string {
+export function buildSystemPrompt(voiceId: string, customPrompt?: string): string {
   const voice = getVoiceById(voiceId);
-  return MASTER_PROMPT.replace("{{STYLE_PROMPT}}", voice.stylePrompt);
+  let prompt = MASTER_PROMPT.replace("{{STYLE_PROMPT}}", voice.stylePrompt);
+
+  if (customPrompt?.trim()) {
+    prompt += `\n\nCUSTOM USER INSTRUCTIONS (apply these on top of everything above):\n${customPrompt.trim()}`;
+  }
+
+  return prompt;
 }
 
 export function buildUserPrompt(params: {

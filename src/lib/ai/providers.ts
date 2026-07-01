@@ -63,6 +63,7 @@ async function callOpenAiCompatible(
         { role: "user", content: user },
       ],
       temperature: 0.7,
+      max_tokens: 2048,
     }),
   });
 

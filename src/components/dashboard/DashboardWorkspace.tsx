@@ -41,6 +41,7 @@ function WorkspaceContent() {
           provider: settings.provider,
           apiKey: settings.apiKey,
           model: settings.model,
+          customPrompt: settings.customPrompt,
           linkedinPost,
           outputFormat,
           threadCount,
